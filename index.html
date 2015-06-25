@@ -57,6 +57,12 @@ rect.parent,
   fill: #bbb;
 }
 
+.label-div {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
 </style>
 
 <h1> <center> City of Sacramento Budget 2015/16 </center></h1>
@@ -198,10 +204,13 @@ d3.json("data/sacbudget.json", function(root) {
       .append("title")
         .text(function(d) { return formatNumber(d.amount2016); });
 
-    g.append("text")
+    g.append("foreignObject")
         .attr("dy", ".75em")
-        .text(function(d) { return d.name + ": " + dollarformat(d.amount2016); })
-        .call(text);
+        .call(label)
+	  .append("xhtml:div")
+		.attr("class", "label-div")
+		.text(function(d) { return d.name + ": " + dollarformat(d.amount2016); });
+	
 
     function transition(d) {
       if (transitioning || !d) return;
@@ -222,11 +231,11 @@ d3.json("data/sacbudget.json", function(root) {
       svg.selectAll(".depth").sort(function(a, b) { return a.depth - b.depth; });
 
       // Fade-in entering text.
-      g2.selectAll("text").style("fill-opacity", 0);
+      g2.selectAll("foreignObject").style("fill-opacity", 0);
 
       // Transition to the new view.
-      t1.selectAll("text").call(text).style("fill-opacity", 0);
-      t2.selectAll("text").call(text).style("fill-opacity", 1);
+      t1.selectAll("foreignObject").call(label).style("fill-opacity", 0);
+      t2.selectAll("foreignObject").call(label).style("fill-opacity", 1);
       t1.selectAll("rect").call(rect);
       t2.selectAll("rect").call(rect);
 
@@ -240,13 +249,15 @@ d3.json("data/sacbudget.json", function(root) {
     return g;
   }
 
-  function text(text) {
-    text.attr("x", function(d) { return x(d.x) + 36; })
-        .attr("y", function(d) { return y(d.y) + (y(d.y + d.dy) - y(d.y))/8; });
+  function label(theLabel) {
+    theLabel.attr("x", function(d) { return x(d.x) + 36; })
+            .attr("y", function(d) { return y(d.y) + (y(d.y + d.dy) - y(d.y))/8; })
+            .attr("width", function(d) { return x(d.x + d.dx) - x(d.x); })
+	        .attr("height", function(d) { return y(d.y + d.dy) - y(d.y); });
   }
 
-  function rect(rect) {
-    rect.attr("x", function(d) { return x(d.x); })
+  function rect(theRect) {
+    theRect.attr("x", function(d) { return x(d.x); })
         .attr("y", function(d) { return y(d.y); })
         .attr("width", function(d) { return x(d.x + d.dx) - x(d.x); })
 		.attr("height", function(d) { return y(d.y + d.dy) - y(d.y); });	//added
